@@ -3,140 +3,153 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090b">
 <title>Ember Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
 <style>
-  /* One column, phone first: the heater card is the page; controls under it, log last. */
+  /* Dark only, like the device. Colours are the firmware's (ui.h): heat orange, at-temp red, off grey-blue. */
   :root {
-    --bg: #f5f3f0; --card: #ffffff; --ink: #1c1a18; --muted: #6d665f; --line: #e1dbd3;
-    --heat: #d9541e; --heat-ink: #ffffff; --ok: #2e7d4f; --bad: #b3261e; --warn: #9a6400; --focus: #2f6fdb;
-    --num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: dark;
+    --bg: #08090b; --panel: #14181e; --row: #1c222b; --line: #2a323d; --ink: #eef1f5; --dim: #8a97a8;
+    --heat: #ff8c1a; --hot: #ff2a1a; --off: #5a6b7d; --go: #1e8e3e; --fault: #ff3b30; --bt: #3d8bff;
+    --font: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #141312; --card: #1e1c1a; --ink: #eee9e3; --muted: #a59d94; --line: #34302c;
-      --heat: #f06a30; --heat-ink: #1a0d06; --ok: #6fcf97; --bad: #ff8a80; --warn: #f2c14e; --focus: #6d9cf0; color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #141312; --card: #1e1c1a; --ink: #eee9e3; --muted: #a59d94; --line: #34302c;
-    --heat: #f06a30; --heat-ink: #1a0d06; --ok: #6fcf97; --bad: #ff8a80; --warn: #f2c14e; --focus: #6d9cf0; color-scheme: dark;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 520px; margin: 0 auto; padding-block: 16px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 14px; }
-  header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  h1 { font-size: 20px; margin: 0; }
-  .pill { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-  .pill.on { color: var(--ok); border-color: currentColor; }
-  .pill.err { color: var(--bad); border-color: currentColor; }
-  section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  button { font: inherit; font-size: 15px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; min-height: 44px; }
-  button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  button.primary { background: var(--heat); border-color: var(--heat); color: var(--heat-ink); font-weight: 600; }
-  button:disabled { opacity: .45; cursor: default; }
-  .grow { flex: 1 1 auto; }
-  .big { font-family: var(--num); font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-  .unit { font-size: 22px; color: var(--muted); margin-left: 2px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px 16px; }
-  .stat { display: flex; flex-direction: column; min-width: 0; }
-  .stat b { font-family: var(--num); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .stat span { font-size: 12.5px; color: var(--muted); }
-  .mode { font-weight: 600; }
-  .mode.run { color: var(--heat); }
-  .fault { color: var(--bad); font-weight: 600; }
-  input[type=number] { font: inherit; font-family: var(--num); font-size: 18px; width: 7em; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
-  .note { font-size: 13.5px; color: var(--muted); margin: 0; }
-  .note.warn { color: var(--warn); }
-  #log { font: 12px/1.4 var(--num); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 0; max-height: 220px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 500 16px/1.4 var(--font); }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--bt); outline-offset: 3px; }
+  button:disabled { opacity: .35; cursor: default; }
   [hidden] { display: none !important; }
+  .screen { min-height: 100%; display: flex; flex-direction: column; align-items: center; padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+
+  /* ---- Landing: the wordmark and Connect, nothing else ---- */
+  #start { justify-content: center; gap: 56px; }
+  .mark { text-align: center; }
+  .mark h1 { margin: 0; font-size: clamp(52px, 17vw, 84px); font-weight: 800; letter-spacing: .16em; padding-left: .16em;
+    background: linear-gradient(180deg, #ffd27a 0%, #ff8c1a 45%, #ff2a1a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 18px rgba(255, 90, 20, .45)); }
+  .mark p { margin: 6px 0 0; color: var(--dim); font-size: 14px; letter-spacing: .3em; text-transform: uppercase; }
+  #btnConnect { width: min(78vw, 300px); padding: 18px 0; border-radius: 999px; background: var(--heat); color: #1a0b02;
+    font-size: 19px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 8px 30px rgba(255, 120, 20, .35); }
+  #btnConnect:active { transform: scale(.98); }
+  #msg { max-width: 320px; text-align: center; color: var(--dim); font-size: 14px; min-height: 1.4em; margin-top: -32px; }
+  #msg.err { color: #ffb4a8; }
+
+  /* ---- Connected ---- */
+  #live { gap: 18px; max-width: 460px; margin: 0 auto; }
+  .bar { width: 100%; display: flex; align-items: center; gap: 10px; }
+  .bar .name { flex: 1; color: var(--dim); font-size: 14px; letter-spacing: .04em; }
+  .bar .bt { color: var(--bt); font-size: 18px; line-height: 1; }
+  .bar button { background: var(--row); color: var(--dim); border-radius: 999px; padding: 8px 14px; font-size: 13px; }
+  .gauge { position: relative; width: min(84vw, 340px); aspect-ratio: 1; }
+  .gauge svg { width: 100%; height: 100%; display: block; }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  #status { font-size: 15px; font-weight: 700; letter-spacing: .12em; color: var(--off); }
+  #pv { font-size: clamp(60px, 21vw, 92px); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; margin: 4px 0; }
+  #pv small { font-size: .38em; color: var(--dim); font-weight: 600; margin-left: 2px; vertical-align: .9em; }
+  #spLine { font-size: 17px; color: var(--dim); font-weight: 600; font-variant-numeric: tabular-nums; }
+  #spLine b { color: var(--ink); }
+  .meta { display: flex; gap: 22px; color: var(--dim); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  #fault { width: 100%; background: rgba(255, 59, 48, .12); border: 1px solid rgba(255, 59, 48, .5); color: #ffb4a8; border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+  #fault span { flex: 1; }
+  #fault button { background: var(--fault); color: #fff; border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 700; }
+  .set { width: 100%; display: flex; align-items: center; justify-content: space-between; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 10px; }
+  .set button { width: 64px; height: 64px; border-radius: 50%; background: var(--row); font-size: 30px; font-weight: 600; }
+  .set .val { text-align: center; }
+  .set .val div { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .set .val span { font-size: 12px; color: var(--dim); letter-spacing: .14em; text-transform: uppercase; }
+  .actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .actions button { padding: 18px 0; border-radius: 18px; font-size: 17px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  #btnRun { background: var(--go); color: #fff; }
+  #btnRun.stop { background: var(--hot); }
+  #btnBoost { background: var(--row); border: 1px solid var(--line); }
+  #btnBoost.on { background: rgba(255, 140, 26, .15); border-color: var(--heat); color: var(--heat); }
+  #note { color: var(--dim); font-size: 13px; text-align: center; min-height: 1.3em; margin-top: -6px; }
+  details { width: 100%; color: var(--dim); font-size: 13px; }
+  summary { cursor: pointer; padding: 6px 0; }
+  #log { margin: 6px 0 0; padding: 10px; background: var(--panel); border-radius: 12px; max-height: 180px; overflow: auto; white-space: pre-wrap; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; }
+  #diag { margin-top: 8px; word-break: break-word; }
+  @media (prefers-reduced-motion: no-preference) { #arcVal { transition: stroke-dashoffset .6s ease, stroke .6s ease; } }
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <h1>Ember Connect</h1>
-    <span class="pill" id="conn">Not connected</span>
-  </header>
 
-  <section id="start">
-    <p class="note" id="support"></p>
-    <div class="row">
-      <button class="primary grow" id="btnConnect">Connect</button>
-    </div>
-    <p class="note">On the device: <b>Settings › Bluetooth › Connect phone</b>, then press Connect here. When asked, type the 6-digit code shown on the device's screen.</p>
-    <p class="note" id="diag"></p>
-  </section>
+<section class="screen" id="start">
+  <div class="mark"><h1>EMBER</h1><p>by SedHed</p></div>
+  <button id="btnConnect">Connect</button>
+  <div id="msg" role="status"></div>
+</section>
 
-  <section id="heater" hidden>
-    <div class="row">
-      <h2 class="grow" id="devName">Heater</h2>
-      <span class="mode" id="mode">Off</span>
-    </div>
-    <div><span class="big" id="pv">---</span><span class="unit" id="unit"></span></div>
-    <div class="fault" id="fault" hidden></div>
-    <div class="stats">
-      <div class="stat"><b id="sp">---</b><span>Setpoint</span></div>
-      <div class="stat"><b id="out">0%</b><span>Power</span></div>
-      <div class="stat"><b id="probe">---</b><span>Probe</span></div>
-      <div class="stat"><b id="autoOff">-</b><span>Auto-off in</span></div>
-    </div>
-    <div class="row">
-      <button class="primary grow" id="btnStart">Start</button>
-      <button class="grow" id="btnStop">Stop</button>
-    </div>
-    <div class="row">
-      <button id="btnDown" aria-label="Setpoint down 5">−5</button>
-      <input type="number" id="spIn" inputmode="decimal" aria-label="New setpoint">
-      <button id="btnUp" aria-label="Setpoint up 5">+5</button>
-      <button class="grow" id="btnSet">Set</button>
-    </div>
-    <div class="row">
-      <button class="grow" id="btnBoost">Boost</button>
-      <button class="grow" id="btnClear">Clear fault</button>
-      <button class="grow" id="btnDisconnect">Disconnect</button>
-    </div>
-    <p class="note" id="remoteNote"></p>
-  </section>
+<section class="screen" id="live" hidden>
+  <div class="bar">
+    <svg class="bt" width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M2 5.5l10 9-5 4.5V1l5 4.5-10 9" fill="none" stroke="#3d8bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="name" id="devName">Ember</span>
+    <button id="btnDisconnect">Disconnect</button>
+  </div>
 
-  <section>
-    <h2>Log</h2>
+  <div class="gauge">
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="84" fill="none" stroke="#1c222b" stroke-width="12" stroke-linecap="round"
+              stroke-dasharray="395.8 527.8" transform="rotate(135 100 100)"/>
+      <circle id="arcVal" cx="100" cy="100" r="84" fill="none" stroke="#5a6b7d" stroke-width="12" stroke-linecap="round"
+              stroke-dasharray="395.8 527.8" stroke-dashoffset="395.8" transform="rotate(135 100 100)"/>
+      <circle id="spDot" cx="100" cy="16" r="5" fill="#eef1f5"/>
+    </svg>
+    <div class="center">
+      <div id="status">OFF</div>
+      <div id="pv">---<small id="unit">°F</small></div>
+      <div id="spLine">Set <b id="sp">---</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <span>Probe <b id="probe">---</b></span>
+    <span id="autoOffWrap" hidden>Auto-off <b id="autoOff">-</b></span>
+  </div>
+
+  <div id="fault" hidden><span id="faultText"></span><button id="btnClear">Clear</button></div>
+
+  <div class="set">
+    <button id="btnDown" aria-label="Setpoint down">−</button>
+    <div class="val"><div id="spEdit">---</div><span>Setpoint</span></div>
+    <button id="btnUp" aria-label="Setpoint up">+</button>
+  </div>
+
+  <div class="actions">
+    <button id="btnRun">Start</button>
+    <button id="btnBoost">Boost</button>
+  </div>
+  <div id="note"></div>
+
+  <details>
+    <summary>Activity</summary>
     <pre id="log" aria-live="polite"></pre>
-  </section>
-</main>
+    <div id="diag"></div>
+  </details>
+</section>
+
 <script type="module">
-import { SERVICE, INFO, STATE, COMMAND, OP, RESULT_TEXT, MODE_TEXT, FAULT_TEXT, encodeCommand, decodeInfo, decodeState, tenths, toUnit, fromUnit } from './codec.mjs';
+import { SERVICE, INFO, STATE, COMMAND, OP, RESULT_TEXT, FAULT_TEXT, encodeCommand, decodeInfo, decodeState, tenths, toUnit, fromUnit } from './codec.mjs';
 
 const $ = (id) => document.getElementById(id);
-const logEl = $('log');
-const log = (s) => { const t = new Date().toLocaleTimeString(); logEl.textContent = `${t}  ${s}\n` + logEl.textContent; };
+const log = (s) => { $('log').textContent = `${new Date().toLocaleTimeString()}  ${s}\n` + $('log').textContent; };
+const ARC = 395.8;  // 270° of a 84 px radius circle
+const STEP = 5;     // setpoint step, display units
 
-let dev = null;   // { info, read(), write(bytes), onState(cb), disconnect() }
-let info = null, state = null, seq = 0, pending = new Map();
+let dev = null, info = null, state = null, seq = 0, pending = new Map();
+let spWant = null, spTimer = null;  // a setpoint being dialled in, sent when the taps stop
 
-// ---- Browser support ----
-// Checked again on every Connect: some iPhone Bluetooth browsers (Bluefy) add
-// navigator.bluetooth a moment after the page loads.
 const hasBt = () => !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
-function showSupport() {
-  const ok = hasBt();
-  $('support').textContent = ok
-    ? 'This browser can use Bluetooth.'
-    : (window.isSecureContext
-        ? 'No Web Bluetooth here yet. Use Chrome or Edge (Windows, Mac, Android), or the Bluefy app on iPhone.'
-        : 'Bluetooth needs this page over https (or localhost).');
-  $('support').classList.toggle('warn', !ok);
-  $('diag').textContent = `https: ${window.isSecureContext ? 'yes' : 'no'} · bluetooth: ${navigator.bluetooth ? 'yes' : 'no'} · ${navigator.userAgent}`;
-}
-showSupport();
-setTimeout(showSupport, 1500);
-window.addEventListener('load', () => setTimeout(showSupport, 300));
+const diag = () => `https: ${window.isSecureContext ? 'yes' : 'no'} · bluetooth: ${navigator.bluetooth ? 'yes' : 'no'} · ${navigator.userAgent}`;
+function say(text, err) { $('msg').textContent = text; $('msg').classList.toggle('err', !!err); }
 
-// ---- Real device (Web Bluetooth) ----
+// ---- Bluetooth ----
 async function connectBle() {
   const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE] }], optionalServices: [SERVICE] });
-  log(`Selected ${device.name || 'device'}; connecting…`);
+  say('Connecting…');
   const server = await device.gatt.connect();
   const svc = await server.getPrimaryService(SERVICE);
   const [ci, cs, cc] = await Promise.all([svc.getCharacteristic(INFO), svc.getCharacteristic(STATE), svc.getCharacteristic(COMMAND)]);
@@ -146,99 +159,134 @@ async function connectBle() {
     read: async () => decodeState(await cs.readValue()),
     write: (b) => (cc.writeValueWithResponse ? cc.writeValueWithResponse(b) : cc.writeValue(b)),
     onState: async (cb) => {
-      cs.addEventListener('characteristicvaluechanged', async (e) => {
-        const s = decodeState(e.target.value);
-        cb(s || await d.read());  // cut short at a small MTU: read it whole
-      });
+      cs.addEventListener('characteristicvaluechanged', async (e) => cb(decodeState(e.target.value) || await d.read()));
       await cs.startNotifications();
     },
     disconnect: () => device.gatt.connected && device.gatt.disconnect(),
   };
-  device.addEventListener('gattserverdisconnected', () => { log('Disconnected.'); setConnected(false); });
+  device.addEventListener('gattserverdisconnected', () => { log('Disconnected.'); showLanding('Disconnected.'); });
   return d;
 }
 
-// ---- Shared ----
-function setConnected(on) {
-  $('heater').hidden = !on;
-  $('start').hidden = on;
-  $('conn').textContent = on ? `Connected · ${dev?.name}` : 'Not connected';
-  $('conn').className = 'pill' + (on ? ' on' : '');
-  if (!on) { dev = null; state = null; pending.clear(); }
+function showLanding(text, err) {
+  dev = null; state = null; pending.clear(); spWant = null;
+  $('live').hidden = true; $('start').hidden = false;
+  $('btnConnect').disabled = false;
+  say(text || '', err);
 }
 
-async function start(getDevice) {
+$('btnConnect').onclick = async () => {
+  $('diag').textContent = diag();
+  if (!hasBt()) {
+    say(window.isSecureContext ? 'This browser can’t use Bluetooth. On iPhone, open this page in Bluefy; elsewhere use Chrome or Edge.'
+                               : 'Bluetooth needs this page over https.', true);
+    return;
+  }
+  $('btnConnect').disabled = true;
+  say('Choose your Ember…');
   try {
-    dev = await getDevice();
+    dev = await connectBle();
     info = dev.info;
-    log(`${info.boardName}, firmware ${info.fw}, protocol ${info.protocol}. Max setpoint ${fmt(info.spMaxC)}. Remote start ${info.remoteStart ? 'allowed' : 'off'}.`);
-    if (info.protocol !== 1) log(`This page speaks protocol 1; the device has ${info.protocol}.`);
-    $('devName').textContent = info.boardName;
+    log(`${info.boardName}, firmware ${info.fw}. Max ${fmt(info.spMaxC)}. Remote start ${info.remoteStart ? 'on' : 'off'}.`);
+    say('Pairing… type the code shown on your Ember if asked.');
+    const s = await dev.read();  // the first protected read asks to pair
+    $('devName').textContent = dev.name;
     $('unit').textContent = info.fahrenheit ? '°F' : '°C';
-    $('remoteNote').textContent = info.remoteStart ? '' : 'Start is off: turn on Settings › Bluetooth › Remote start on the device to start heating from here. Stop always works.';
-    $('btnStart').disabled = !info.remoteStart;
-    setConnected(true);
-    log('Reading state (this asks to pair the first time)…');
-    show(await dev.read());
+    $('start').hidden = true; $('live').hidden = false;
+    show(s);
     await dev.onState(show);
     log('Live.');
   } catch (e) {
-    log(`Couldn't connect: ${e.message || e}`);
-    setConnected(false);
+    const m = e && e.name === 'NotFoundError' ? '' : `Couldn’t connect: ${e.message || e}`;
+    if (m) log(m);
+    if (dev) dev.disconnect();
+    showLanding(m, !!m);
   }
-}
+};
+$('btnDisconnect').onclick = () => dev && dev.disconnect();
 
-const fmt = (c, digits = 0) => (c == null ? '---' : `${toUnit(c, info?.fahrenheit).toFixed(digits)}${info?.fahrenheit ? '°F' : '°C'}`);
+// ---- Showing the state ----
+const fmt = (c) => (c == null ? '---' : `${Math.round(toUnit(c, info?.fahrenheit))}${info?.fahrenheit ? '°F' : '°C'}`);
+const disp = (c) => Math.round(toUnit(c, info.fahrenheit));
 
 function show(s) {
   if (!s) return;
   state = s;
   const c = s.zones[0], p = s.zones[1];
-  $('pv').textContent = c.pv == null ? '---' : toUnit(c.pv, info.fahrenheit).toFixed(0);
-  $('sp').textContent = fmt(c.sp) + (c.boost ? ' + boost' : '');
-  $('out').textContent = `${c.out}%`;
+  const running = c.mode === 1, tuning = c.mode === 2;
+  const reached = c.pv != null && c.sp > 0 && c.pv >= c.sp - 2;
+  const hot = c.pv != null && c.pv >= 51.7;
+  const col = c.fault ? 'var(--fault)' : running ? (reached ? 'var(--hot)' : 'var(--heat)') : hot ? 'var(--heat)' : 'var(--off)';
+
+  $('pv').firstChild.nodeValue = c.pv == null ? '---' : disp(c.pv);
+  $('sp').textContent = fmt(c.sp) + (c.boost ? ' +boost' : '');
+  const st = c.fault ? 'FAULT' : running ? `HEATING ${c.out}%` : tuning ? 'TUNING' : hot ? 'OFF · HOT' : 'OFF';
+  $('status').textContent = st;
+  $('status').style.color = col;
+
+  const max = info.spMaxC || 427;
+  const frac = c.pv == null ? 0 : Math.max(0, Math.min(1, c.pv / max));
+  const arc = $('arcVal');
+  arc.style.strokeDashoffset = String(ARC * (1 - frac));
+  arc.style.stroke = col;
+  const a = (135 + 270 * Math.max(0, Math.min(1, c.sp / max))) * Math.PI / 180;  // setpoint marker on the ring
+  $('spDot').setAttribute('cx', (100 + 84 * Math.cos(a)).toFixed(1));
+  $('spDot').setAttribute('cy', (100 + 84 * Math.sin(a)).toFixed(1));
+
   $('probe').textContent = p ? fmt(p.pv) : '-';
-  $('autoOff').textContent = s.autoOffLeftS ? `${Math.floor(s.autoOffLeftS / 60)}:${String(s.autoOffLeftS % 60).padStart(2, '0')}` : '-';
-  $('mode').textContent = MODE_TEXT[c.mode] || '?';
-  $('mode').className = 'mode' + (c.mode === 1 ? ' run' : '');
+  $('autoOffWrap').hidden = !s.autoOffLeftS;
+  $('autoOff').textContent = `${Math.floor(s.autoOffLeftS / 60)}:${String(s.autoOffLeftS % 60).padStart(2, '0')}`;
+
   const f = c.fault || (p && p.fault);
   $('fault').hidden = !f;
-  $('fault').textContent = f ? `Fault: ${FAULT_TEXT[f] || f}` : '';
-  $('btnBoost').textContent = c.boost ? 'Cancel boost' : 'Boost';
-  if (document.activeElement !== $('spIn') && $('spIn').value === '') $('spIn').value = Math.round(toUnit(c.sp, info.fahrenheit));
+  $('faultText').textContent = f ? `Fault: ${FAULT_TEXT[f] || f}` : '';
+
+  if (spWant == null) $('spEdit').textContent = disp(c.sp) + (info.fahrenheit ? '°' : '°');
+  $('btnRun').textContent = running || tuning ? 'Stop' : 'Start';
+  $('btnRun').classList.toggle('stop', running || tuning);
+  $('btnRun').disabled = !(running || tuning) && !info.remoteStart;
+  $('btnBoost').classList.toggle('on', c.boost);
+  $('btnBoost').textContent = c.boost ? 'Boost on' : 'Boost';
+  $('btnBoost').disabled = !running && !c.boost;
+  $('note').textContent = !(running || tuning) && !info.remoteStart ? 'Start from the phone is off. Turn on Settings › Bluetooth › Remote start on your Ember.' : '';
+
   const want = pending.get(s.ackSeq);
   if (want && s.ackResult) {
     pending.delete(s.ackSeq);
     log(`${want}: ${RESULT_TEXT[s.ackResult] || s.ackResult}`);
+    if (s.ackResult !== 1) $('note').textContent = `${want}: ${RESULT_TEXT[s.ackResult] || 'refused'}`;
   }
 }
 
+// ---- Commands ----
 async function send(op, value, label) {
   if (!dev) return;
-  seq = (seq + 1) & 0xff || 1;
+  seq = ((seq + 1) & 0xff) || 1;
   pending.set(seq, label);
   try { await dev.write(encodeCommand(seq, op, 0, value)); }
   catch (e) { pending.delete(seq); log(`${label}: not sent (${e.message || e})`); }
 }
 
-$('btnConnect').onclick = () => {
-  showSupport();
-  if (!hasBt()) { log(`No Web Bluetooth in this browser (https: ${window.isSecureContext ? 'yes' : 'no'}).`); return; }
-  start(connectBle);
+function nudge(dir) {
+  if (!state) return;
+  const max = Math.floor(toUnit(info.spMaxC, info.fahrenheit)), min = Math.ceil(toUnit(info.spMinC, info.fahrenheit));
+  const base = spWant ?? disp(state.zones[0].sp);
+  spWant = Math.max(min, Math.min(max, Math.round((base + dir * STEP) / STEP) * STEP));
+  $('spEdit').textContent = spWant + '°';
+  clearTimeout(spTimer);
+  spTimer = setTimeout(() => {  // send once the taps stop, like the knob settling
+    const d = spWant; spWant = null;
+    send(OP.SETPOINT, tenths(fromUnit(d, info.fahrenheit)), `Set ${d}${info.fahrenheit ? '°F' : '°C'}`);
+  }, 700);
+}
+$('btnUp').onclick = () => nudge(1);
+$('btnDown').onclick = () => nudge(-1);
+$('btnRun').onclick = () => {
+  const on = state && state.zones[0].mode !== 0;
+  send(on ? OP.STOP : OP.START, 0, on ? 'Stop' : 'Start');
 };
-$('btnDisconnect').onclick = () => dev && dev.disconnect();
-$('btnStart').onclick = () => send(OP.START, 0, 'Start');
-$('btnStop').onclick = () => send(OP.STOP, 0, 'Stop');
-$('btnClear').onclick = () => send(OP.CLEAR, 0, 'Clear fault');
 $('btnBoost').onclick = () => { const on = !(state && state.zones[0].boost); send(OP.BOOST, on ? 1 : 0, on ? 'Boost' : 'Cancel boost'); };
-const step = (d) => { $('spIn').value = (Number($('spIn').value) || 0) + d; };
-$('btnUp').onclick = () => step(5);
-$('btnDown').onclick = () => step(-5);
-$('btnSet').onclick = () => {
-  const d = Number($('spIn').value);
-  if (!Number.isFinite(d) || $('spIn').value === '') { log('Type a setpoint first.'); return; }
-  send(OP.SETPOINT, tenths(fromUnit(d, info.fahrenheit)), `Set ${d}${info.fahrenheit ? '°F' : '°C'}`);
-};
+$('btnClear').onclick = () => send(OP.CLEAR, 0, 'Clear fault');
 </script>
 </body>
 </html>
