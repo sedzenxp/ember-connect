@@ -25,16 +25,13 @@
   .screen { min-height: 100%; display: flex; flex-direction: column; align-items: center; padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
 
   /* ---- Landing: the wordmark and Connect, nothing else ---- */
-  #start { justify-content: center; gap: 56px; }
-  .mark { text-align: center; }
-  .mark h1 { margin: 0; font-size: clamp(52px, 17vw, 84px); font-weight: 800; letter-spacing: .16em; padding-left: .16em;
-    background: linear-gradient(180deg, #ffd27a 0%, #ff8c1a 45%, #ff2a1a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
-    filter: drop-shadow(0 0 18px rgba(255, 90, 20, .45)); }
-  .mark p { margin: 6px 0 0; color: var(--dim); font-size: 14px; letter-spacing: .3em; text-transform: uppercase; }
+  #start { justify-content: center; gap: 28px; }
+  .hint { margin: 0; text-align: center; color: var(--dim); font-size: 14px; line-height: 1.6; }
+  .hint b { color: var(--ink); font-weight: 600; }
   #btnConnect { width: min(78vw, 300px); padding: 18px 0; border-radius: 999px; background: var(--heat); color: #1a0b02;
     font-size: 19px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 8px 30px rgba(255, 120, 20, .35); }
   #btnConnect:active { transform: scale(.98); }
-  #msg { max-width: 320px; text-align: center; color: var(--dim); font-size: 14px; min-height: 1.4em; margin-top: -32px; }
+  #msg { max-width: 320px; text-align: center; color: var(--dim); font-size: 14px; min-height: 1.4em; }
   #msg.err { color: #ffb4a8; }
 
   /* ---- Connected ---- */
@@ -78,8 +75,8 @@
 <body>
 
 <section class="screen" id="start">
-  <div class="mark"><h1>EMBER</h1><p>by SedHed</p></div>
   <button id="btnConnect">Connect</button>
+  <p class="hint">Turn on Bluetooth on your Ember first:<br><b>Settings › Bluetooth › Connect phone</b></p>
   <div id="msg" role="status"></div>
 </section>
 
