@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ember Connect</title>
+<style>
+  /* One column, phone first: the heater card is the page; controls under it, log last. */
+  :root {
+    --bg: #f5f3f0; --card: #ffffff; --ink: #1c1a18; --muted: #6d665f; --line: #e1dbd3;
+    --heat: #d9541e; --heat-ink: #ffffff; --ok: #2e7d4f; --bad: #b3261e; --warn: #9a6400; --focus: #2f6fdb;
+    --num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141312; --card: #1e1c1a; --ink: #eee9e3; --muted: #a59d94; --line: #34302c;
+      --heat: #f06a30; --heat-ink: #1a0d06; --ok: #6fcf97; --bad: #ff8a80; --warn: #f2c14e; --focus: #6d9cf0; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141312; --card: #1e1c1a; --ink: #eee9e3; --muted: #a59d94; --line: #34302c;
+    --heat: #f06a30; --heat-ink: #1a0d06; --ok: #6fcf97; --bad: #ff8a80; --warn: #f2c14e; --focus: #6d9cf0; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 520px; margin: 0 auto; padding-block: 16px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 14px; }
+  header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; }
+  .pill { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.on { color: var(--ok); border-color: currentColor; }
+  .pill.err { color: var(--bad); border-color: currentColor; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; font-size: 15px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; min-height: 44px; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  button.primary { background: var(--heat); border-color: var(--heat); color: var(--heat-ink); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  .grow { flex: 1 1 auto; }
+  .big { font-family: var(--num); font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .unit { font-size: 22px; color: var(--muted); margin-left: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px 16px; }
+  .stat { display: flex; flex-direction: column; min-width: 0; }
+  .stat b { font-family: var(--num); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 12.5px; color: var(--muted); }
+  .mode { font-weight: 600; }
+  .mode.run { color: var(--heat); }
+  .fault { color: var(--bad); font-weight: 600; }
+  input[type=number] { font: inherit; font-family: var(--num); font-size: 18px; width: 7em; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .note { font-size: 13.5px; color: var(--muted); margin: 0; }
+  .note.warn { color: var(--warn); }
+  #log { font: 12px/1.4 var(--num); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 0; max-height: 220px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Ember Connect</h1>
+    <span class="pill" id="conn">Not connected</span>
+  </header>
+
+  <section id="start">
+    <p class="note" id="support"></p>
+    <div class="row">
+      <button class="primary grow" id="btnConnect">Connect</button>
+      <button id="btnDemo">Try demo</button>
+    </div>
+    <p class="note">On the device: <b>Settings › Bluetooth › Connect phone</b>, then press Connect here. When asked, type the 6-digit code shown on the device's screen.</p>
+    <p class="note" id="diag"></p>
+  </section>
+
+  <section id="heater" hidden>
+    <div class="row">
+      <h2 class="grow" id="devName">Heater</h2>
+      <span class="mode" id="mode">Off</span>
+    </div>
+    <div><span class="big" id="pv">---</span><span class="unit" id="unit"></span></div>
+    <div class="fault" id="fault" hidden></div>
+    <div class="stats">
+      <div class="stat"><b id="sp">---</b><span>Setpoint</span></div>
+      <div class="stat"><b id="out">0%</b><span>Power</span></div>
+      <div class="stat"><b id="probe">---</b><span>Probe</span></div>
+      <div class="stat"><b id="autoOff">-</b><span>Auto-off in</span></div>
+    </div>
+    <div class="row">
+      <button class="primary grow" id="btnStart">Start</button>
+      <button class="grow" id="btnStop">Stop</button>
+    </div>
+    <div class="row">
+      <button id="btnDown" aria-label="Setpoint down 5">−5</button>
+      <input type="number" id="spIn" inputmode="decimal" aria-label="New setpoint">
+      <button id="btnUp" aria-label="Setpoint up 5">+5</button>
+      <button class="grow" id="btnSet">Set</button>
+    </div>
+    <div class="row">
+      <button class="grow" id="btnBoost">Boost</button>
+      <button class="grow" id="btnClear">Clear fault</button>
+      <button class="grow" id="btnDisconnect">Disconnect</button>
+    </div>
+    <p class="note" id="remoteNote"></p>
+  </section>
+
+  <section>
+    <h2>Log</h2>
+    <pre id="log" aria-live="polite"></pre>
+  </section>
+</main>
+<script type="module">
+import { SERVICE, INFO, STATE, COMMAND, OP, RESULT_TEXT, MODE_TEXT, FAULT_TEXT, encodeCommand, decodeInfo, decodeState, tenths, toUnit, fromUnit } from './codec.mjs';
+
+const $ = (id) => document.getElementById(id);
+const logEl = $('log');
+const log = (s) => { const t = new Date().toLocaleTimeString(); logEl.textContent = `${t}  ${s}\n` + logEl.textContent; };
+
+let dev = null;   // { info, read(), write(bytes), onState(cb), disconnect() }
+let info = null, state = null, seq = 0, pending = new Map();
+
+// ---- Browser support ----
+// Checked again on every Connect: some iPhone Bluetooth browsers (Bluefy) add
+// navigator.bluetooth a moment after the page loads.
+const hasBt = () => !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
+function showSupport() {
+  const ok = hasBt();
+  $('support').textContent = ok
+    ? 'This browser can use Bluetooth.'
+    : (window.isSecureContext
+        ? 'No Web Bluetooth here yet. Use Chrome or Edge (Windows, Mac, Android), or the Bluefy app on iPhone. "Try demo" works anywhere.'
+        : 'Bluetooth needs this page over https (or localhost). "Try demo" works anywhere.');
+  $('support').classList.toggle('warn', !ok);
+  $('diag').textContent = `https: ${window.isSecureContext ? 'yes' : 'no'} · bluetooth: ${navigator.bluetooth ? 'yes' : 'no'} · ${navigator.userAgent}`;
+}
+showSupport();
+setTimeout(showSupport, 1500);
+window.addEventListener('load', () => setTimeout(showSupport, 300));
+
+// ---- Real device (Web Bluetooth) ----
+async function connectBle() {
+  const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE] }], optionalServices: [SERVICE] });
+  log(`Selected ${device.name || 'device'}; connecting…`);
+  const server = await device.gatt.connect();
+  const svc = await server.getPrimaryService(SERVICE);
+  const [ci, cs, cc] = await Promise.all([svc.getCharacteristic(INFO), svc.getCharacteristic(STATE), svc.getCharacteristic(COMMAND)]);
+  const d = {
+    name: device.name || 'Ember',
+    info: decodeInfo(await ci.readValue()),
+    read: async () => decodeState(await cs.readValue()),
+    write: (b) => (cc.writeValueWithResponse ? cc.writeValueWithResponse(b) : cc.writeValue(b)),
+    onState: async (cb) => {
+      cs.addEventListener('characteristicvaluechanged', async (e) => {
+        const s = decodeState(e.target.value);
+        cb(s || await d.read());  // cut short at a small MTU: read it whole
+      });
+      await cs.startNotifications();
+    },
+    disconnect: () => device.gatt.connected && device.gatt.disconnect(),
+  };
+  device.addEventListener('gattserverdisconnected', () => { log('Disconnected.'); setConnected(false); });
+  return d;
+}
+
+// ---- Demo device: same rules as the firmware's remote.h, nothing real ----
+function demoDevice() {
+  const z = [{ pv: 22, sp: 93.3, out: 0, mode: 0, fault: 0, boost: false }, { pv: 22, sp: 0, out: 0, mode: 0, fault: 0, boost: false }];
+  const inf = { protocol: 1, board: 1, boardName: '1.46" rotary (demo)', layout: 0, zones: 2, heaters: 1, fahrenheit: true, remoteStart: false, spMinC: 0, spMaxC: 426.7, fw: 'demo' };
+  let ack = [0, 0], cb = null, timer = null;
+  const snap = () => ({ ackSeq: ack[0], ackResult: ack[1], autoOffLeftS: 0, zones: z.map((x) => ({ ...x, pv: Math.round(x.pv * 10) / 10 })) });
+  timer = setInterval(() => {
+    const c = z[0];
+    if (c.mode === 1) {
+      const target = c.sp + (c.boost ? 13.9 : 0);
+      c.out = Math.max(0, Math.min(100, (target - c.pv) * 4));
+      c.pv += (22 + 4.5 * c.out - c.pv) * 0.02;
+    } else { c.out = 0; c.pv += (22 - c.pv) * 0.01; }
+    z[1].pv += (c.pv * 0.8 + 4 - z[1].pv) * 0.01;
+    cb && cb(snap());
+  }, 500);
+  return {
+    name: 'Ember demo', info: inf,
+    read: async () => snap(),
+    onState: async (f) => { cb = f; },
+    disconnect: () => { clearInterval(timer); setConnected(false); log('Demo ended.'); },
+    write: async (b) => {
+      const [s, op, zone, lo, hi] = b; let v = lo | (hi << 8); if (v & 0x8000) v -= 0x10000;
+      const c = z[0]; let r = 1;
+      if (op < 1 || op > 5) r = 3; else if (zone >= inf.heaters) r = 4;
+      else if (op === OP.START) r = !inf.remoteStart ? 6 : c.fault ? 7 : 1;
+      else if (op === OP.SETPOINT) r = v / 10 < inf.spMinC || v / 10 > inf.spMaxC ? 5 : 1;
+      else if (op === OP.BOOST) r = v && c.mode !== 1 ? 10 : 1;
+      if (r === 1) {
+        if (op === OP.START) c.mode = 1;
+        if (op === OP.STOP) { c.mode = 0; c.boost = false; }
+        if (op === OP.SETPOINT) c.sp = v / 10;
+        if (op === OP.BOOST) c.boost = !!v;
+        if (op === OP.CLEAR) c.fault = 0;
+      }
+      ack = [s, r];
+      setTimeout(() => cb && cb(snap()), 150);
+    },
+    demo: inf,
+  };
+}
+
+// ---- Shared ----
+function setConnected(on) {
+  $('heater').hidden = !on;
+  $('start').hidden = on;
+  $('conn').textContent = on ? `Connected · ${dev?.name}` : 'Not connected';
+  $('conn').className = 'pill' + (on ? ' on' : '');
+  if (!on) { dev = null; state = null; pending.clear(); }
+}
+
+async function start(getDevice) {
+  try {
+    dev = await getDevice();
+    info = dev.info;
+    log(`${info.boardName}, firmware ${info.fw}, protocol ${info.protocol}. Max setpoint ${fmt(info.spMaxC)}. Remote start ${info.remoteStart ? 'allowed' : 'off'}.`);
+    if (info.protocol !== 1) log(`This page speaks protocol 1; the device has ${info.protocol}.`);
+    $('devName').textContent = info.boardName;
+    $('unit').textContent = info.fahrenheit ? '°F' : '°C';
+    $('remoteNote').textContent = info.remoteStart ? '' : 'Start is off: turn on Settings › Bluetooth › Remote start on the device to start heating from here. Stop always works.';
+    $('btnStart').disabled = !info.remoteStart;
+    setConnected(true);
+    log('Reading state (this asks to pair the first time)…');
+    show(await dev.read());
+    await dev.onState(show);
+    log('Live.');
+  } catch (e) {
+    log(`Couldn't connect: ${e.message || e}`);
+    setConnected(false);
+  }
+}
+
+const fmt = (c, digits = 0) => (c == null ? '---' : `${toUnit(c, info?.fahrenheit).toFixed(digits)}${info?.fahrenheit ? '°F' : '°C'}`);
+
+function show(s) {
+  if (!s) return;
+  state = s;
+  const c = s.zones[0], p = s.zones[1];
+  $('pv').textContent = c.pv == null ? '---' : toUnit(c.pv, info.fahrenheit).toFixed(0);
+  $('sp').textContent = fmt(c.sp) + (c.boost ? ' + boost' : '');
+  $('out').textContent = `${c.out}%`;
+  $('probe').textContent = p ? fmt(p.pv) : '-';
+  $('autoOff').textContent = s.autoOffLeftS ? `${Math.floor(s.autoOffLeftS / 60)}:${String(s.autoOffLeftS % 60).padStart(2, '0')}` : '-';
+  $('mode').textContent = MODE_TEXT[c.mode] || '?';
+  $('mode').className = 'mode' + (c.mode === 1 ? ' run' : '');
+  const f = c.fault || (p && p.fault);
+  $('fault').hidden = !f;
+  $('fault').textContent = f ? `Fault: ${FAULT_TEXT[f] || f}` : '';
+  $('btnBoost').textContent = c.boost ? 'Cancel boost' : 'Boost';
+  if (document.activeElement !== $('spIn') && $('spIn').value === '') $('spIn').value = Math.round(toUnit(c.sp, info.fahrenheit));
+  const want = pending.get(s.ackSeq);
+  if (want && s.ackResult) {
+    pending.delete(s.ackSeq);
+    log(`${want}: ${RESULT_TEXT[s.ackResult] || s.ackResult}`);
+  }
+}
+
+async function send(op, value, label) {
+  if (!dev) return;
+  seq = (seq + 1) & 0xff || 1;
+  pending.set(seq, label);
+  try { await dev.write(encodeCommand(seq, op, 0, value)); }
+  catch (e) { pending.delete(seq); log(`${label}: not sent (${e.message || e})`); }
+}
+
+$('btnConnect').onclick = () => {
+  showSupport();
+  if (!hasBt()) { log(`No Web Bluetooth in this browser (https: ${window.isSecureContext ? 'yes' : 'no'}).`); return; }
+  start(connectBle);
+};
+$('btnDemo').onclick = () => start(async () => demoDevice());
+$('btnDisconnect').onclick = () => dev && dev.disconnect();
+$('btnStart').onclick = () => send(OP.START, 0, 'Start');
+$('btnStop').onclick = () => send(OP.STOP, 0, 'Stop');
+$('btnClear').onclick = () => send(OP.CLEAR, 0, 'Clear fault');
+$('btnBoost').onclick = () => { const on = !(state && state.zones[0].boost); send(OP.BOOST, on ? 1 : 0, on ? 'Boost' : 'Cancel boost'); };
+const step = (d) => { $('spIn').value = (Number($('spIn').value) || 0) + d; };
+$('btnUp').onclick = () => step(5);
+$('btnDown').onclick = () => step(-5);
+$('btnSet').onclick = () => {
+  const d = Number($('spIn').value);
+  if (!Number.isFinite(d) || $('spIn').value === '') { log('Type a setpoint first.'); return; }
+  send(OP.SETPOINT, tenths(fromUnit(d, info.fahrenheit)), `Set ${d}${info.fahrenheit ? '°F' : '°C'}`);
+};
+</script>
+</body>
+</html>
